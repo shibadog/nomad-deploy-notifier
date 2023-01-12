@@ -100,7 +100,7 @@ func (b *Bot) DefaultAttachments(deploy api.Deployment) []slack.Attachment {
 				Style: "danger",
 				Type:  "button",
 				Confirm: &slack.ConfirmationField{
-					Title:       "Are you sure?",
+					Title:       "あってる?",
 					Text:        ":nomad-sad: :nomad-sad: :nomad-sad: :nomad-sad: :nomad-sad:",
 					OkText:      "Fail",
 					DismissText: "Woops!",
@@ -112,7 +112,7 @@ func (b *Bot) DefaultAttachments(deploy api.Deployment) []slack.Attachment {
 	for tgn, tg := range deploy.TaskGroups {
 		field := slack.AttachmentField{
 			Title: fmt.Sprintf("Task Group: %s", tgn),
-			Value: fmt.Sprintf("Healthy: %d, Placed: %d, Desired Canaries: %d", tg.HealthyAllocs, tg.PlacedAllocs, tg.DesiredCanaries),
+			Value: fmt.Sprintf("Healthy: %d, 配置数: %d, カナリア: %d", tg.HealthyAllocs, tg.PlacedAllocs, tg.DesiredCanaries),
 		}
 		fields = append(fields, field)
 	}
@@ -120,9 +120,9 @@ func (b *Bot) DefaultAttachments(deploy api.Deployment) []slack.Attachment {
 		{
 			Fallback:   "deployment update",
 			Color:      colorForStatus(deploy.Status),
-			AuthorName: fmt.Sprintf("%s deployment update", deploy.JobID),
+			AuthorName: fmt.Sprintf("%sのデプロイで更新がありました。", deploy.JobID),
 			AuthorLink: fmt.Sprintf("%s/ui/jobs/%s/deployments", b.nomadAddress, deploy.JobID),
-			Title:      deploy.StatusDescription,
+			Title:      jpMessageFoStatusDescription(deploy.StatusDescription),
 			TitleLink:  fmt.Sprintf("%s/ui/jobs/%s/deployments", b.nomadAddress, deploy.JobID),
 			Fields:     fields,
 			Footer:     fmt.Sprintf("Deploy ID: %s", deploy.ID),
@@ -142,5 +142,18 @@ func colorForStatus(status string) string {
 		return "#36a64f"
 	default:
 		return "#D3D3D3"
+	}
+}
+
+func jpMessageFoStatusDescription(statusDescription string) string {
+	switch statusDescription {
+	case "Deployment completed successfully":
+		return "デプロイメントが正常に完了しました。"
+	case "Failed due to progress deadline":
+		return "タイムアウトしたため失敗しました。"
+	case "Deployment is running":
+		return "デプロイメントが開始されました。"
+	default:
+		return statusDescription
 	}
 }
