@@ -48,7 +48,7 @@ func (b *Bot) UpsertDeployMsg(deploy api.Deployment) error {
 	if !ok {
 		return b.initialDeployMsg(deploy)
 	}
-	b.L.Debug("Existing deployment found, updating status", "slack ts", ts)
+	// b.L.Debug("Existing deployment found, updating status", "slack ts", ts)
 
 	attachments := DefaultAttachments(deploy)
 	opts := []slack.MsgOption{slack.MsgOptionAttachments(attachments...)}
