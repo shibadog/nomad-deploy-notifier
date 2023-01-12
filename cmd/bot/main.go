@@ -8,6 +8,7 @@ import (
 
 	"github.com/drewbailey/nomad-deploy-notifier/internal/bot"
 	"github.com/drewbailey/nomad-deploy-notifier/internal/stream"
+	"github.com/hashicorp/nomad/api"
 )
 
 func main() {
@@ -18,6 +19,7 @@ func realMain(args []string) int {
 	ctx, closer := CtxWithInterrupt(context.Background())
 	defer closer()
 
+	config := api.DefaultConfig()
 	token := os.Getenv("SLACK_TOKEN")
 	toChannel := os.Getenv("SLACK_CHANNEL")
 
@@ -28,7 +30,13 @@ func realMain(args []string) int {
 
 	stream := stream.NewStream()
 
-	slackBot, err := bot.NewBot(slackCfg)
+	nomadServerExternalURL := os.Getenv("NOMAD_SERVER_EXTERNAL_URL")
+	if nomadServerExternalURL == "" {
+		nomadServerExternalURL = config.Address
+		stream.L.Info("using default nomad server external URL since NOMAD_SERVER_EXTERNAL_URL is empty",
+			"nomad_url", nomadServerExternalURL)
+	}
+	slackBot, err := bot.NewBot(slackCfg, nomadServerExternalURL)
 	if err != nil {
 		panic(err)
 	}

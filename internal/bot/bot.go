@@ -17,14 +17,15 @@ type Config struct {
 }
 
 type Bot struct {
-	mu      sync.Mutex
-	chanID  string
-	api     *slack.Client
-	deploys map[string]string
-	L       hclog.Logger
+	mu           sync.Mutex
+	chanID       string
+	nomadAddress string
+	api          *slack.Client
+	deploys      map[string]string
+	L            hclog.Logger
 }
 
-func NewBot(cfg Config) (*Bot, error) {
+func NewBot(cfg Config, nomadAddress string) (*Bot, error) {
 	if cfg.Token == "" {
 		return nil, fmt.Errorf("no token provided")
 	}
@@ -32,9 +33,10 @@ func NewBot(cfg Config) (*Bot, error) {
 	api := slack.New(cfg.Token)
 
 	bot := &Bot{
-		api:     api,
-		chanID:  cfg.Channel,
-		deploys: make(map[string]string),
+		api:          api,
+		nomadAddress: nomadAddress,
+		chanID:       cfg.Channel,
+		deploys:      make(map[string]string),
 	}
 
 	return bot, nil
@@ -83,7 +85,7 @@ func DefaultDeployMsgOpts() []slack.MsgOption {
 	}
 }
 
-func DefaultAttachments(deploy api.Deployment) []slack.Attachment {
+func (b *Bot) DefaultAttachments(deploy api.Deployment) []slack.Attachment {
 	var actions []slack.AttachmentAction
 	if deploy.StatusDescription == "Deployment is running but requires manual promotion" {
 		actions = []slack.AttachmentAction{
@@ -119,9 +121,9 @@ func DefaultAttachments(deploy api.Deployment) []slack.Attachment {
 			Fallback:   "deployment update",
 			Color:      colorForStatus(deploy.Status),
 			AuthorName: fmt.Sprintf("%s deployment update", deploy.JobID),
-			AuthorLink: fmt.Sprintf("http://127.0.0.1:4646/ui/jobs/%s/deployments", deploy.JobID),
+			AuthorLink: fmt.Sprintf("%s/ui/jobs/%s/deployments", b.nomadAddress, deploy.JobID),
 			Title:      deploy.StatusDescription,
-			TitleLink:  fmt.Sprintf("http://127.0.0.1:4646/ui/jobs/%s/deployments", deploy.JobID),
+			TitleLink:  fmt.Sprintf("%s/ui/jobs/%s/deployments", b.nomadAddress, deploy.JobID),
 			Fields:     fields,
 			Footer:     fmt.Sprintf("Deploy ID: %s", deploy.ID),
 			Ts:         json.Number(fmt.Sprintf("%d", time.Now().Unix())),
