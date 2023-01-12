@@ -52,7 +52,7 @@ func (b *Bot) UpsertDeployMsg(deploy api.Deployment) error {
 	}
 	// b.L.Debug("Existing deployment found, updating status", "slack ts", ts)
 
-	attachments := DefaultAttachments(deploy)
+	attachments := b.DefaultAttachments(deploy)
 	opts := []slack.MsgOption{slack.MsgOptionAttachments(attachments...)}
 	opts = append(opts, DefaultDeployMsgOpts()...)
 
@@ -66,7 +66,7 @@ func (b *Bot) UpsertDeployMsg(deploy api.Deployment) error {
 }
 
 func (b *Bot) initialDeployMsg(deploy api.Deployment) error {
-	attachments := DefaultAttachments(deploy)
+	attachments := b.DefaultAttachments(deploy)
 
 	opts := []slack.MsgOption{slack.MsgOptionAttachments(attachments...)}
 	opts = append(opts, DefaultDeployMsgOpts()...)
